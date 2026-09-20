@@ -1,3 +1,4 @@
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
@@ -5,7 +6,7 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
 from app.schemas.sales import SaleCreate, SaleResponse
-from app.services.sales import create_sale
+from app.services.sales import create_sale, get_sales
 
 
 router = APIRouter(
@@ -29,3 +30,14 @@ def create_new_sale(
         data=data,
         user=current_user,
     )
+
+
+@router.get(
+    "/",
+    response_model=list[SaleResponse],
+)
+def list_sales(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return get_sales(db)

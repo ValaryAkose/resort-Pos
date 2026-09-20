@@ -16,7 +16,7 @@ def create_sale(
     data: SaleCreate,
     user: User,
 ):
-    # 1. Validate customer if supplied
+
     customer = None
 
     if data.customer_id is not None:
@@ -32,7 +32,7 @@ def create_sale(
                 detail="Customer not found",
             )
 
-    # 2. Validate payment method
+
     allowed_payment_methods = {
         "cash",
         "card",
@@ -45,7 +45,7 @@ def create_sale(
             detail="Invalid payment method",
         )
 
-    # 3. Prepare sale items
+
     sale_items = []
     subtotal = 0.0
 
@@ -89,11 +89,11 @@ def create_sale(
             }
         )
 
-    # 4. Calculate totals
+
     tax = round(subtotal * TAX_RATE, 2)
     total = round(subtotal + tax, 2)
 
-    # 5. Create Sale
+
     sale = Sale(
         customer_id=data.customer_id,
         user_id=user.id,
@@ -107,7 +107,7 @@ def create_sale(
     db.add(sale)
     db.flush()
 
-    # 6. Create SaleItems and reduce stock
+
     for item in sale_items:
         product = item["product"]
 
@@ -123,8 +123,24 @@ def create_sale(
 
         db.add(sale_item)
 
-    # 7. Save transaction
     db.commit()
     db.refresh(sale)
+
+    return sale
+from app.repositories.sales import get_sale, get_sales
+
+
+def list_sales(db: Session):
+    return get_sales(db)
+
+
+def find_sale(db: Session, sale_id: int):
+    sale = get_sale(db, sale_id)
+
+    if not sale:
+        raise HTTPException(
+            status_code=404,
+            detail="Sale not found",
+        )
 
     return sale
